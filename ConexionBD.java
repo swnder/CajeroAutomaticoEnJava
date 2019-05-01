@@ -1,5 +1,4 @@
-package Central;
-
+package appcajero;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -18,6 +17,10 @@ public class ConexionBD {
     public ConexionBD(String a) {
         estaConectado();
         this.baseD=a;
+    }
+
+    ConexionBD() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     public boolean estaConectado(){
         if (conexion != null)
@@ -49,7 +52,6 @@ public class ConexionBD {
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, "No se puede eliminar el registro debido a que la misma está siendo utilizada en otra tabla", "Atencion",
                     JOptionPane.INFORMATION_MESSAGE);
-            JOptionPane.showMessageDialog(null, e);
             return false;
         }
         return true;
@@ -73,7 +75,7 @@ public class ConexionBD {
             Statement s = conexion.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
             rs = s.executeQuery(sql);
         } catch (Exception e){
-            JOptionPane.showMessageDialog(null, "Ocurrio Un error en Consulta" , "Atencion",
+            JOptionPane.showMessageDialog(null, "Ocurrio Un error en Consulta: "+e , "Atencion",
             JOptionPane.INFORMATION_MESSAGE);
             System.out.println(sql);
         }
@@ -85,11 +87,9 @@ public class ConexionBD {
         try {
             // Se crea un Statement, para realizar la sentencia
             Statement s = conexion.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-            ResultSet.CONCUR_UPDATABLE);
+                    ResultSet.CONCUR_UPDATABLE);
             // Se realiza el insert a la BD
             resultado = s.executeUpdate("insert into "+tabla+" ("+campos+") values ("+valores+")");
-            //JOptionPane.showMessageDialog(null, s);
-            
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Ocurrio Un error\n"+e.getMessage() , "Atencion",
                     JOptionPane.INFORMATION_MESSAGE);
@@ -104,9 +104,9 @@ public class ConexionBD {
             Statement s = conexion.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
                     ResultSet.CONCUR_UPDATABLE);
             // Se realiza el insert a la BD
-            resultado = s.executeUpdate("insert into " + tabla + " values(" + valores + " );");
+            resultado = s.executeUpdate("insert into "+tabla+ " values("+valores+")");
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Ocurrio Un error\n" + e.getMessage(), "Atencion",
+            JOptionPane.showMessageDialog(null, "Ocurrio Un error\n"+e.getMessage() , "Atencion",
                     JOptionPane.INFORMATION_MESSAGE);
             return false;
         }
@@ -120,9 +120,9 @@ public class ConexionBD {
                     ResultSet.CONCUR_UPDATABLE);
             rs = s.executeQuery(sql);
             while (rs.next()){
-                String columnas[] = new String[2];
+                String columnas[] = new String[1];
                 columnas[0] = rs.getString(1);
-                columnas[1] = rs.getString(2);
+                //columnas[1] = rs.getString(2);
                 combo.addItem(columnas);
                 contar++;
             }
@@ -185,7 +185,7 @@ public class ConexionBD {
         camposCombo = new ArrayList();
     }
 
-    public void llenarCombo(JComboBox combo, String campos, String tabla, String PrimerItem){
+    public void llenarCombo(JComboBox combo, String campos, String tabla){
          ResultSet rsC = null;
          try{
              //Crear la sentencia para la consulta
@@ -201,8 +201,6 @@ public class ConexionBD {
                  //Agregar al arraylist datos del rsC
                  camposCombo.add(new datosCombo(rsC.getInt(1), rsC.getString(2)));
              }
-             //Agrega el primer item en el combo con index 0
-              combo.addItem(PrimerItem);
              for (datosCombo nombre: camposCombo){
                  //Agregar items al combo
                  combo.addItem(nombre);
@@ -264,7 +262,41 @@ public class ConexionBD {
             conexion.close();
         } catch (Exception e) {
         }
-    }//fin de cierra conexion
+    }
+    
+    public void llenarCombo2(JComboBox combo, String PrimerItem){
+         ResultSet rsC = null;
+         try{
+             //Crear la sentencia para la consulta
+             Statement sentencia=conexion.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+                    ResultSet.CONCUR_READ_ONLY);
+             //Se ejecuta la consulta
+             //rsC = sentencia.executeQuery("select " + campos + " from " + tabla);
+             rsC = sentencia.executeQuery("select c.id_cajero, d.calle from cajeros c "
+                + "inner join direccion d on direcion=id_direccion");
+           //Se inicializa el arraylist
+             ArrayList<datosCombo> camposCombo;
+             camposCombo = new ArrayList();
+             //Recorrer los registros
+             while (rsC.next()) {
+                 //Agregar al arraylist datos del rsC
+                 camposCombo.add(new datosCombo(rsC.getInt(1), rsC.getString(2)));
+                
+             }
+             //JOptionPane.showMessageDialog(null, camposCombo.get(2));
+             //Agrega el primer item en el combo con index 0
+              combo.addItem(PrimerItem);
+             for (datosCombo nombre: camposCombo){
+                 //Agregar items al combo
+                 combo.addItem(nombre);
+             }
+             
+         }catch(Exception e) {
+             //Si ocurrio un error mostrar mensaje
+             JOptionPane.showMessageDialog(null, "Error al llenar combo\n" + e.getMessage()  , "Llenar Combo - "  + combo.getName(), JOptionPane.ERROR_MESSAGE);
+             return;
+         }
+     }
     
     public String GenerarCodgio(String campo, String tabla){
         String codigo=null;
@@ -278,11 +310,6 @@ public class ConexionBD {
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Error de Conexión con base de datos\n vuelve a intentarlo");
         }
-        
-        
-        
-        
-        
         return codigo;
     }
 }
